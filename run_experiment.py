@@ -58,6 +58,8 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--device", type=str, default="")
     parser.add_argument("--output", type=str, default="out/run")
+    parser.add_argument("--train-fraction", type=float, default=1.0, help="Fraction of training data to use")
+    parser.add_argument("--test-fraction", type=float, default=1.0, help="Fraction of test data to use")
     parser.add_argument("--quantiles", type=str, default="0.50,0.60,0.70,0.80,0.85,0.90,0.92,0.94,0.95,0.97,0.99")
     parser.add_argument("--beta", type=float, default=0.03)
     parser.add_argument("--trim", type=float, default=0.05)
@@ -108,7 +110,9 @@ def main():
 
     # Partition training data
     train_labels = labels_from_dataset(train_ds)
-    client_indices = dirichlet_partition(train_labels, args.clients, args.alpha, seed=args.seed)
+    client_indices = dirichlet_partition(
+        train_labels, args.clients, args.alpha, seed=args.seed, fraction=args.train_fraction
+    )
     train_subsets, calib_subsets = split_client_data(
         train_ds, client_indices, calib_fraction=args.calib_frac, seed=args.seed
     )
@@ -118,10 +122,15 @@ def main():
 
     # Partition test data for per-client evaluation
     test_labels = labels_from_dataset(test_ds)
-    test_indices = dirichlet_partition(test_labels, args.clients, args.alpha, seed=args.seed + 1)
+    test_indices = dirichlet_partition(
+        test_labels, args.clients, args.alpha, seed=args.seed + 1, fraction=args.test_fraction
+    )
     test_subsets = [Subset(test_ds, idxs) for idxs in test_indices]
     test_loaders = build_eval_loaders(test_subsets, batch_size=args.batch_size)
-    global_test_loader = build_test_loader(test_ds, batch_size=args.batch_size, num_workers=2)
+    global_test_dataset = (
+        Subset(test_ds, [i for idxs in test_indices for i in idxs]) if args.test_fraction < 1.0 else test_ds
+    )
+    global_test_loader = build_test_loader(global_test_dataset, batch_size=args.batch_size, num_workers=2)
 
     # Build and train model
     model = build_model(args.model, spec.num_classes, pretrained=args.pretrained)

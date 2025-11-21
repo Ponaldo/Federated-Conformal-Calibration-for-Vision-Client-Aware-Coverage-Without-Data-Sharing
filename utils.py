@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from typing import Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy as np
 import torch
@@ -30,10 +30,26 @@ def average_state_dicts(states: List[Dict[str, torch.Tensor]], weights: List[flo
     return total
 
 
+def _to_serializable(obj: Any):
+    if isinstance(obj, dict):
+        return {k: _to_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [
+            _to_serializable(v) for v in obj
+        ]  # preserve tuple contents; outer type not critical for JSON
+    if isinstance(obj, (np.generic, np.ndarray)):
+        return obj.tolist()
+    if isinstance(obj, (torch.Tensor,)):
+        return obj.detach().cpu().tolist()
+    if isinstance(obj, (torch.device,)):
+        return str(obj)
+    return obj
+
+
 def save_json(obj: Dict, path: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(obj, f, indent=2)
+        json.dump(_to_serializable(obj), f, indent=2)
 
 
 def to_numpy(t: torch.Tensor) -> np.ndarray:

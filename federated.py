@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
-from .utils import average_state_dicts, get_device
+from utils import average_state_dicts, get_device
 
 
 @dataclass
