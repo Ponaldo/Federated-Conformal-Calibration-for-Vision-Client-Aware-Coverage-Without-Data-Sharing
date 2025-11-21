@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from .calibration import apply_temperature, softmax_probs
+from calibration import apply_temperature, softmax_probs
 
 
 def compute_ece(probs: torch.Tensor, labels: torch.Tensor, num_bins: int = 15) -> float:

@@ -30,7 +30,7 @@ def _default_transforms(spec: DatasetSpec, train: bool, use_randaugment: bool = 
     if spec.image_size >= 96:
         resize = T.Resize((spec.image_size, spec.image_size))
     else:
-        resize = T.Resize(spec.image_size) if spec.image_size != 32 else T.Identity()
+        resize = T.Resize(spec.image_size) if spec.image_size != 32 else T.Lambda(lambda x: x)
 
     normalize = T.Normalize(
         mean=[0.485, 0.456, 0.406],

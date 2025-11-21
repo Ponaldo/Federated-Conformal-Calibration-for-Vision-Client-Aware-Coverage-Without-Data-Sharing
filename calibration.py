@@ -9,7 +9,7 @@ from sklearn.isotonic import IsotonicRegression
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from .utils import to_numpy
+from utils import to_numpy
 
 
 def _forward_logits(model: nn.Module, loader: DataLoader, device: torch.device) -> Tuple[torch.Tensor, torch.Tensor]:
